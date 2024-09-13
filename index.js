@@ -4,7 +4,9 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userModel = require("./models/userModel");
 const roleModel = require("./models/roleModel");
-const auth = require("./middleware/authentication");
+const endpointModel = require("./models/endpoints");
+const authenticate = require("./middleware/authentication");
+const authorized = require("./middleware/authorize");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -86,6 +88,7 @@ app.post("/register", (req, res, next) => {
           let registerData = userModel({
             email: req.body.email,
             password: req.body.password,
+            role: "user",
           });
           registerData
             .save()
@@ -126,9 +129,13 @@ app.post("/login", async (req, res, next) => {
       if (data) {
         let match = await bcrypt.compare(req.body.password, data.password);
         if (match) {
-          let token = await jwt.sign({ uid: data._id }, "thisISMYKEY123", {
-            expiresIn: "1minutes",
-          });
+          let token = await jwt.sign(
+            { uid: data._id, role: data.role },
+            "thisISMYKEY123",
+            {
+              expiresIn: "2minutes",
+            }
+          );
           token = "JWT " + token;
           res.send(token);
         } else {
@@ -143,12 +150,41 @@ app.post("/login", async (req, res, next) => {
   }
 });
 
-app.post("/adddata", auth, (req, res, next) => {
+app.post("/addrole", authenticate, async (req, res, next) => {
   try {
-    res.send(req.user);
+    let checkRole = await userModel.findOne({ _id: req.uid, role: req.role });
+    if (checkRole["role"] == "admin" && req.role == "admin") {
+      let role = roleModel({
+        role: req.body.role,
+      });
+      let data = await role.save();
+      res.send(data);
+    }
   } catch (error) {
     next({ message: error.message, statusCode: error.statuscode });
   }
+});
+
+app.post("/addendpoint", authenticate, async (req, res, next) => {
+  try {
+    let checkRole = await userModel.findOne({ _id: req.uid, role: req.role });
+    if (checkRole["role"] == "admin" && req.role == "admin") {
+      let endPoint = endpointModel({
+        endpoint: req.body.endpoint,
+        role: req.body.role,
+      });
+      let data = await endPoint.save();
+      res.send(data);
+    }
+  } catch (error) {
+    next({ message: error.message, statusCode: error.statuscode });
+  }
+});
+
+// app.post("/editprofile",authenticate,authorize);
+
+app.post("/deleteuser", authenticate, authorized, (req, res, next) => {
+  res.send("working");
 });
 
 //error Handler Middleware

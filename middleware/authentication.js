@@ -1,16 +1,24 @@
 const jwt = require("jsonwebtoken");
-function auth(req, res, next) {
+function authenticate(req, res, next) {
   function check() {
-    let data = req.header("Authorization").split(" ");
-    data = jwt.verify(data[1], "thisISMYKEY123");
-    if (data) {
-      req.user = data["uid"];
-      next();
-    } else {
-      next();
+    try {
+      let data = req.header("Authorization");
+      if (data != null && data != undefined) {
+        data = data.split(" ");
+        data = jwt.verify(data[1], "thisISMYKEY123");
+        req.uid = data["uid"];
+        req.role = data["role"];
+        console.log(data);
+        next();
+      } else {
+        res.json({ status: 401, message: "Unauthorized" });
+      }
+    } catch (error) {
+      console.log(error);
+      next({ message: error.message, statusCode: error.statuscode });
     }
   }
   return check();
 }
 
-module.exports = auth;
+module.exports = authenticate;
