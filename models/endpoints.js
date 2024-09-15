@@ -6,10 +6,12 @@ const endPointSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  role: {
-    type: String,
-    required: true,
-  },
+  role: [
+    {
+      type: String,
+      required: true,
+    },
+  ],
 });
 
 module.exports = mongoose.model("endpoints", endPointSchema);

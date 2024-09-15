@@ -8,13 +8,11 @@ function authenticate(req, res, next) {
         data = jwt.verify(data[1], "thisISMYKEY123");
         req.uid = data["uid"];
         req.role = data["role"];
-        console.log(data);
         next();
       } else {
         res.json({ status: 401, message: "Unauthorized" });
       }
     } catch (error) {
-      console.log(error);
       next({ message: error.message, statusCode: error.statuscode });
     }
   }
