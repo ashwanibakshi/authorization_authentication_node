@@ -184,7 +184,7 @@ app.post("/addendpoint", authenticate, async (req, res, next) => {
 app.post("/deleteuser", authenticate, authorized, async (req, res, next) => {
   try {
     let data = await userModel.deleteOne({ _id: req.body.uid });
-    console.log(data);
+
     if (data.deletedCount > 0) {
       res.send("user removed!");
     } else {
